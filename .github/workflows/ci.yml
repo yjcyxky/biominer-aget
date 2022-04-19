@@ -53,4 +53,4 @@ jobs:
       - name: Benchmark
         if: matrix.os == 'ubuntu-latest'
         run: |
-          ci/benchmark.bash
+          bash ci/benchmark.bash
