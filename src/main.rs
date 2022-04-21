@@ -1,12 +1,13 @@
 #![allow(dead_code)]
 
 #[macro_use]
-mod common;
+extern crate aget_rs;
 
-mod app;
-mod arguments;
-mod config;
-mod features;
+use aget_rs::common;
+use aget_rs::app;
+use aget_rs::arguments;
+use aget_rs::config;
+use aget_rs::features;
 
 use std::{process::exit, thread, time::Duration};
 
