@@ -69,15 +69,13 @@ impl SignResponse {
     let client = reqwest::blocking::Client::new();
     let body = match client.post(&endpoint).send() {
       Ok(resp) => {
-        if resp.status() != reqwest::StatusCode::CREATED {
-          error!(
-            "Error: not found the guid {}, Reason: {}",
-            guid,
-            resp.text().unwrap()
-          );
+        let status = resp.status();
+        let content = resp.text().unwrap();
+        if status != reqwest::StatusCode::CREATED {
+          error!("Error: not found the guid {}, Reason: {}", guid, content);
           std::process::exit(1);
         } else {
-          let sign_response: SignResponse = serde_json::from_str(&resp.text().unwrap()).unwrap();
+          let sign_response: SignResponse = serde_json::from_str(&content).unwrap();
           sign_response
         }
       }

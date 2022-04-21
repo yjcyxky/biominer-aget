@@ -60,7 +60,7 @@ struct Opt {
   #[structopt(name = "guid", short = "g", long = "guid")]
   guid: String,
 
-  /// Username for the biominer api server
+  /// Username for the biominer-indexd api server
   #[structopt(
     name = "username",
     short = "u",
@@ -159,8 +159,8 @@ fn main() {
   });
 
   let api_server = if args.api_server.is_none() {
-    // "https://api.3steps.cn/biominer-indexd".to_string()
-    "http://localhost:3000".to_string()
+    "https://api.3steps.cn/biominer-indexd".to_string()
+    // "http://localhost:3000".to_string()
   } else {
     args.api_server.unwrap()
   };
