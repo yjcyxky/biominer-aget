@@ -60,6 +60,15 @@ struct Opt {
   #[structopt(name = "guid", short = "g", long = "guid")]
   guid: String,
 
+  // Output directory
+  #[structopt(
+    name = "output-dir",
+    short = "o",
+    long = "output-dir",
+    default_value = "./"
+  )]
+  output_dir: String,
+
   /// Username for the biominer-indexd api server
   #[structopt(
     name = "username",
@@ -168,9 +177,20 @@ fn main() {
   let sign_resp = SignResponse::new(&api_server, &args.guid);
   trace!("Signed Response: {:?}", sign_resp);
 
-  if Path::new(&sign_resp.filename).exists() {
-    warn!("{} exists, please remove it and retry!", &sign_resp.filename);
+  let output_dir = Path::new(&args.output_dir);
+  let output_file = output_dir.join(&sign_resp.filename);
+  let rc_aget_file = output_dir.join(&format!("{}{}", sign_resp.filename, ".rc.aget"));
+  if output_file.exists() && !rc_aget_file.exists() {
+    warn!(
+      "{} exists, please remove it and retry!",
+      &output_file.to_str().unwrap()
+    );
     std::process::exit(1);
+  } else {
+    info!(
+      "{} exists, but continue transferring from breakpoint.",
+      &output_file.to_str().unwrap()
+    );
   }
 
   let args = sign_resp.into_args(
@@ -181,6 +201,7 @@ fn main() {
     args.retries,
     args.retry_wait,
     args.debug,
+    &output_dir,
   );
 
   for i in 0..args.retries() + 1 {

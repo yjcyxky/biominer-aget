@@ -101,6 +101,7 @@ impl SignResponse {
     retries: Option<u64>,
     retry_wait: Option<u64>,
     debug: bool,
+    output_dir: &Path,
   ) -> IndexdCmdArgs {
     IndexdCmdArgs {
       header: self.sign.header.clone(),
@@ -117,7 +118,11 @@ impl SignResponse {
       size: self.size,
       debug: debug,
       hashes: self.hashes.clone(),
-      filename: self.filename.clone(),
+      filename: output_dir
+        .join(&self.filename.clone())
+        .to_str()
+        .unwrap()
+        .to_string(),
     }
   }
 }
