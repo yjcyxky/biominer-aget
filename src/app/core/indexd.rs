@@ -63,9 +63,9 @@ pub struct IndexdCmdArgs {
 }
 
 impl SignResponse {
-  pub fn new(api_server: &str, guid: &str) -> SignResponse {
+  pub fn new(api_server: &str, guid: &str, which_repo: &str) -> SignResponse {
     let query_guid = guid.split("/").collect::<Vec<&str>>()[1];
-    let endpoint = format!("{}/{}/{}", api_server, "api/v1/files", query_guid);
+    let endpoint = format!("{}/{}/{}?which_repo={}", api_server, "api/v1/files", query_guid, which_repo);
     let client = reqwest::blocking::Client::new();
     let body = match client.post(&endpoint).send() {
       Ok(resp) => {
@@ -231,7 +231,7 @@ impl Args for IndexdCmdArgs {
 
   /// The number of retry of a task, default is 5
   fn retries(&self) -> u64 {
-    self.retries.unwrap_or_else(|| self.retries.unwrap_or(5))
+    self.retries.unwrap_or_else(|| self.retries.unwrap_or(0))
   }
 
   /// The internal of each retry, default is zero

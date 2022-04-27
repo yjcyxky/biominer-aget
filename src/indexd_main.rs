@@ -69,6 +69,16 @@ struct Opt {
   )]
   output_dir: String,
 
+  // Which repository you want to download
+  #[structopt(
+    name = "repo",
+    short = "r",
+    long = "repo",
+    default_value = "node",
+    possible_values = &["node", "gsa", "s3", "oss", "minio"]
+  )]
+  repo: String,
+
   /// Username for the biominer-indexd api server
   #[structopt(
     name = "username",
@@ -120,7 +130,7 @@ struct Opt {
   #[structopt(
     name = "retries",
     long = "retries",
-    help = "The maximum times of retring [default: 5]"
+    help = "The maximum times of retring [default: 0]"
   )]
   pub retries: Option<u64>,
 
@@ -174,24 +184,26 @@ fn main() {
     args.api_server.unwrap()
   };
 
-  let sign_resp = SignResponse::new(&api_server, &args.guid);
+  let sign_resp = SignResponse::new(&api_server, &args.guid, &args.repo);
   trace!("Signed Response: {:?}", sign_resp);
 
   let output_dir = Path::new(&args.output_dir);
   let output_file = output_dir.join(&sign_resp.filename);
   let rc_aget_file = output_dir.join(&format!("{}{}", sign_resp.filename, ".rc.aget"));
-  if output_file.exists() && !rc_aget_file.exists() {
-    warn!(
-      "{} exists, please remove it and retry!",
-      &output_file.to_str().unwrap()
-    );
-    std::process::exit(1);
-  } else {
-    info!(
-      "{} exists, but continue transferring from breakpoint.",
-      &output_file.to_str().unwrap()
-    );
-  }
+  if output_file.exists() {
+    if !rc_aget_file.exists() {
+      warn!(
+        "{} exists, please remove it and retry!",
+        &output_file.to_str().unwrap()
+      );
+      std::process::exit(1);
+    } else {
+      info!(
+        "{} exists, but continue transferring from breakpoint.",
+        &output_file.to_str().unwrap()
+      );
+    }
+  };
 
   let args = sign_resp.into_args(
     args.concurrency,
