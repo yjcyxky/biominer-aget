@@ -47,58 +47,68 @@ fn init_logger(tag_name: &str, level: LevelFilter) -> Result<log4rs::Handle, Str
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt(setting=structopt::clap::AppSettings::ColoredHelp, name="Biominer Aget", author="Jingcheng Yang <yjcyxky@163.com>")]
 struct Opt {
-  /// Activate debug mode
-  /// short and long flags (-D, --debug) will be deduced from the field's name
-  #[structopt(name = "debug", short = "D", long = "debug")]
+  #[structopt(name = "debug", short = "D", long = "debug", help = "Activate debug mode")]
   debug: bool,
 
-  /// Where to find the biominer api server
-  #[structopt(name = "api-server", short = "a", long = "api-server")]
+  #[structopt(name = "api-server", short = "a", long = "api-server", help = "The api server address")]
   api_server: Option<String>,
 
-  /// Which file you want to download
-  #[structopt(name = "guid", short = "g", long = "guid")]
-  guid: String,
+  #[structopt(
+    name = "guid",
+    short = "g",
+    long = "guid",
+    help = "The guid of the file you want to download, e.g. biominer.fudan-pgx/00006134-c655-4bbe-9144-0ee86da83902"
+  )]
+  guid: Option<String>,
 
-  // Output directory
+  #[structopt(
+    name = "hash",
+    short = "H",
+    long = "hash",
+    help = "The hash of the file you want to download, e.g. b47ee06cdf62847f6d4c11bb12ac1ae0"
+  )]
+  hash: Option<String>,
+
   #[structopt(
     name = "output-dir",
     short = "o",
     long = "output-dir",
+    help = "Output directory",
     default_value = "./"
   )]
   output_dir: String,
 
-  // Which repository you want to download
   #[structopt(
     name = "repo",
     short = "r",
     long = "repo",
     default_value = "node",
+    help = "Which data repository you want to download from",
     possible_values = &["node", "gsa", "s3", "oss", "minio"]
   )]
   repo: String,
 
-  /// Username for the biominer-indexd api server
   #[structopt(
     name = "username",
     short = "u",
     long = "username",
+    help = "Username for the biominer-indexd api server",
     default_value = "anonymous"
   )]
   username: String,
 
-  /// Password for the biominer api server
   #[structopt(
     name = "password",
     short = "p",
     long = "password",
+    help = "Password for the biominer api server",
     default_value = "anonymous"
   )]
   password: String,
 
   #[structopt(
     name = "concurrency",
+    short = "c",
     long = "concurrency",
     help = "The number of concurrency request [default: 10]"
   )]
@@ -158,6 +168,36 @@ fn validate_regex(regex_name: &str, value: &str) -> Result<(), Box<dyn Error>> {
   Ok(())
 }
 
+lazy_static! {
+  static ref ACCEPTABLE_HASHES: HashMap<&'static str, Regex> = {
+    let mut m = HashMap::new();
+    m.insert("md5", Regex::new(r"^[0-9a-f]{32}$").unwrap());
+    m.insert("sha1", Regex::new(r"^[0-9a-f]{40}$").unwrap());
+    m.insert("sha256", Regex::new(r"^[0-9a-f]{64}$").unwrap());
+    m.insert("sha512", Regex::new(r"^[0-9a-f]{128}$").unwrap());
+    m.insert("crc32", Regex::new(r"^[0-9a-f]{8}$").unwrap());
+    m.insert("etag", Regex::new(r"^[0-9a-f]{32}(-\d+)?$").unwrap());
+    m.insert("crc64", Regex::new(r"^[0-9a-f]{16}$").unwrap());
+    m
+  };
+}
+
+pub fn validate_hash(hash: &str, algorithm: &str) -> bool {
+  match ACCEPTABLE_HASHES.get(algorithm) {
+    Some(regex) => regex.is_match(hash),
+    None => false,
+  }
+}
+
+pub fn which_hash_type(hash: &str) -> Option<&'static str> {
+  for (algorithm, regex) in ACCEPTABLE_HASHES.iter() {
+    if regex.is_match(hash) {
+      return Some(algorithm);
+    }
+  }
+  None
+}
+
 fn main() {
   let args = Opt::from_args();
 
@@ -172,10 +212,13 @@ fn main() {
     std::process::exit(1);
   };
 
-  validate_regex("guid", &args.guid).unwrap_or_else(|e| {
-    error!("{}", e);
+  if args.guid.is_none() && args.hash.is_none() {
+    error!("Please specify a guid or a hash");
     std::process::exit(1);
-  });
+  } else if args.guid.is_some() && args.hash.is_some() {
+    error!("Please specify a guid or a hash, not both");
+    std::process::exit(1);
+  }
 
   let api_server = if args.api_server.is_none() {
     "https://api.3steps.cn/biominer-indexd".to_string()
@@ -184,7 +227,29 @@ fn main() {
     args.api_server.unwrap()
   };
 
-  let sign_resp = SignResponse::new(&api_server, &args.guid, &args.repo);
+  let sign_resp = if args.guid.is_some() {
+    let guid = &args.guid.unwrap();
+    validate_regex("guid", guid).unwrap_or_else(|e| {
+      error!("{}", e);
+      std::process::exit(1);
+    });
+
+    let sign_resp = SignResponse::new(&api_server, guid, &args.repo);
+    sign_resp
+  } else {
+    let hash = &args.hash.unwrap();
+    match which_hash_type(hash) {
+      Some(_) => {}
+      None => {
+        error!("{} is not a valid hash", hash);
+        std::process::exit(1);
+      }
+    }
+
+    let sign_resp = SignResponse::new_with_hash(&api_server, hash, &args.repo);
+    sign_resp
+  };
+
   trace!("Signed Response: {:?}", sign_resp);
 
   let output_dir = Path::new(&args.output_dir);

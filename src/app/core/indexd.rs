@@ -65,14 +65,38 @@ pub struct IndexdCmdArgs {
 impl SignResponse {
   pub fn new(api_server: &str, guid: &str, which_repo: &str) -> SignResponse {
     let query_guid = guid.split("/").collect::<Vec<&str>>()[1];
-    let endpoint = format!("{}/{}/{}?which_repo={}", api_server, "api/v1/files", query_guid, which_repo);
+    let endpoint = format!(
+      "{}/{}/{}?which_repo={}",
+      api_server, "api/v1/files", query_guid, which_repo
+    );
+
+    let body = SignResponse::sign_file(endpoint.as_str());
+
+    return body;
+  }
+
+  pub fn new_with_hash(api_server: &str, hash: &str, which_repo: &str) -> SignResponse {
+    let endpoint = format!(
+      "{}/{}/{}?which_repo={}",
+      api_server, "api/v1/files/hash", hash, which_repo
+    );
+
+    let body = SignResponse::sign_file(endpoint.as_str());
+
+    return body;
+  }
+
+  fn sign_file(endpoint: &str) -> SignResponse {
     let client = reqwest::blocking::Client::new();
-    let body = match client.post(&endpoint).send() {
+    let body = match client.post(endpoint).send() {
       Ok(resp) => {
         let status = resp.status();
         let content = resp.text().unwrap();
         if status != reqwest::StatusCode::CREATED {
-          error!("Error: not found the guid {}, Reason: {}", guid, content);
+          error!(
+            "Error: not found the file with guid/hash, Reason: {}",
+            content
+          );
           std::process::exit(1);
         } else {
           let sign_response: SignResponse = serde_json::from_str(&content).unwrap();
