@@ -1,9 +1,9 @@
 [package]
 name = "aget-rs"
-version = "0.3.7"
-authors = ["PeterDing <dfhayst@gmail.com>"]
-homepage = "https://github.com/PeterDing/aget-rs"
-description="Aget-rs - Fast Asynchronous Downloader with Rust 🦀"
+version = "0.3.8"
+authors = ["Jingcheng Yang <yjcyxky@163.com>"]
+homepage = "https://github.com/yjcyxky/biominer-aget"
+description="BioMiner Aget - Fast Asynchronous Downloader for Omics Data Files"
 license = "MIT/Apache-2.0"
 readme = "README.md"
 categories = ["command-line-utilities", "asynchronous", "download"]
