@@ -16,7 +16,7 @@ keywords = [
 edition = "2021"
 
 [[bin]]
-name = "ag"
+name = "aget"
 path = "src/main.rs"
 
 [[bin]]
