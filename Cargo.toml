@@ -33,6 +33,7 @@ actix-rt = "2.7"
 # for http
 http = "0.2"
 url = "2"
+openssl = { version = "0.10", features = ["vendored"] }
 awc = { version = "3", features = ["rustls", "compress-brotli", "compress-gzip", "compress-zstd", "trust-dns"] }
 actix-http = { version = "3", features = ["rustls", "compress-brotli", "compress-gzip", "compress-zstd"] }
 

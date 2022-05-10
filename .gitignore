@@ -2,3 +2,4 @@
 Cargo.lock
 /release
 publish.sh
+.DS_Store
