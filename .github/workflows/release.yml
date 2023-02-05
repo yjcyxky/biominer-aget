@@ -51,7 +51,7 @@ jobs:
         shell: bash
       - name: Rename binary
         if: matrix.release_suffix == 'windows'
-        run: mv target\release\biominer-aget biominer-aget-${{ steps.config.outputs.version }}-x86_64-${{ matrix.release_suffix }}
+        run: mv target\\release\\biominer-aget biominer-aget-${{ steps.config.outputs.version }}-x86_64-${{ matrix.release_suffix }}
         shell: bash
       - name: Create a pre-release
         id: pre_release
