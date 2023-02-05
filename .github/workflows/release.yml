@@ -1,0 +1,56 @@
+name: release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  test-pack-release:
+    name: Test, Pack and Release
+    strategy:
+      matrix:
+        build:
+          - linux
+          - windows
+          - mac
+        include:
+          - build: linux
+            os: ubuntu-latest
+            release_suffix: linux
+            rust: "stable"
+          - build: windows
+            os: windows-latest
+            release_suffix: windows
+            rust: "stable"
+          - build: mac
+            os: macos-latest
+            release_suffix: mac
+            rust: "stable"
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Fetch repository
+        uses: actions/checkout@master
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features
+      - name: Configure environment
+        id: config
+        run: |
+          VERSION=${GITHUB_REF/refs\/tags\//}
+          echo ::set-output name=version::$VERSION
+        shell: bash
+      - name: Rename binary
+        run: mv target/release/biominer-aget biominer-aget-${{ steps.config.outputs.version }}-x86_64-${{ matrix.release_suffix }}
+        shell: bash
+      - name: Create a pre-release
+        id: pre_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.create_release.outputs.tag-name }}
+          files: biominer-aget-${{ steps.config.outputs.version }}-x86_64-${{ matrix.release_suffix }}
