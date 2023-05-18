@@ -145,6 +145,13 @@ struct Opt {
   pub retries: Option<u64>,
 
   #[structopt(
+    name = "no-check-certificate",
+    long = "no-check-certificate",
+    help = "Don't check the server certificate against the available certificate authorities"
+  )]
+  pub no_check_certificate: bool,
+
+  #[structopt(
     name = "retry-wait",
     long = "retry-wait",
     help = "The seconds between retries [default: 0]"
@@ -220,11 +227,17 @@ fn main() {
     std::process::exit(1);
   }
 
-  let api_server = if args.api_server.is_none() {
+  let mut api_server = if args.api_server.is_none() {
     "https://api.3steps.cn/biominer-indexd".to_string()
     // "http://localhost:3000".to_string()
   } else {
     args.api_server.unwrap()
+  };
+
+  api_server = if args.no_check_certificate {
+    api_server.replace("https", "http")
+  } else {
+    api_server
   };
 
   let sign_resp = if args.guid.is_some() {
