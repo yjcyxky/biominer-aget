@@ -27,6 +27,10 @@ jobs:
             os: macos-latest
             release_suffix: mac
             rust: "stable"
+          - build: mac-arm64
+            os: macos-latest
+            release_suffix: mac-arm64
+            rust: "stable"
 
     runs-on: ${{ matrix.os }}
     steps:

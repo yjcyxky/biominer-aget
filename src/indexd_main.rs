@@ -82,9 +82,9 @@ struct Opt {
     name = "repo",
     short = "r",
     long = "repo",
-    default_value = "node",
+    default_value = "http",
     help = "Which data repository you want to download from",
-    possible_values = &["node", "gsa", "s3", "oss", "minio"]
+    possible_values = &["node", "gsa", "s3", "oss", "minio", "http"]
   )]
   repo: String,
 

@@ -1,6 +1,6 @@
 [package]
 name = "aget-rs"
-version = "0.3.8"
+version = "0.3.9"
 authors = ["Jingcheng Yang <yjcyxky@163.com>"]
 homepage = "https://github.com/yjcyxky/biominer-aget"
 description = "BioMiner Aget - Fast Asynchronous Downloader for Omics Data Files"
